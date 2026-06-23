@@ -49,5 +49,5 @@ public struct TriggerEvent: Codable {
 
 /// SDK version constant.
 public enum WhenKitVersion {
-    public static let current = "1.0.0"
+    public static let current = "1.0.1"
 }

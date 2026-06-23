@@ -12,12 +12,8 @@ import Foundation
 public final class UserDefaultsStorage: StorageProvider {
     private let defaults: UserDefaults
 
-    public init(suiteName: String? = nil) {
-        if let suiteName = suiteName {
-            self.defaults = UserDefaults(suiteName: suiteName) ?? .standard
-        } else {
-            self.defaults = .standard
-        }
+    public init(suiteName: String = "com.whenkit.storage") {
+        self.defaults = UserDefaults(suiteName: suiteName) ?? .standard
     }
 
     public func set<T: Codable>(_ value: T, forKey key: String) {
