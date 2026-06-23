@@ -13,9 +13,14 @@ final class CooldownManager {
     private let storage: StorageProvider
     private let prefix = "whenkit_cooldown_"
     private var trackedRules: Set<String> = []
+    weak var whenKit: WhenKit?
 
     init(storage: StorageProvider) {
         self.storage = storage
+    }
+
+    private var currentTime: Date {
+        whenKit?.now() ?? Date()
     }
 
     /// Checks if a rule is currently in cooldown.
@@ -23,12 +28,12 @@ final class CooldownManager {
         guard let expiresAt: Double = storage.get(forKey: key(for: ruleName)) else {
             return false
         }
-        return Date().timeIntervalSince1970 < expiresAt
+        return currentTime.timeIntervalSince1970 < expiresAt
     }
 
     /// Records that a rule was triggered, starting its cooldown.
     func recordTrigger(ruleName: String, cooldownInterval: TimeInterval) {
-        let expiresAt = Date().addingTimeInterval(cooldownInterval).timeIntervalSince1970
+        let expiresAt = currentTime.addingTimeInterval(cooldownInterval).timeIntervalSince1970
         storage.set(expiresAt, forKey: key(for: ruleName))
         trackedRules.insert(ruleName)
     }

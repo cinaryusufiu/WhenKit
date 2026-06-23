@@ -46,6 +46,7 @@ public final class WhenKit {
 
     private var userId: String?
     private var userAttributes: [String: String] = [:]
+    private var serverTimeOffset: TimeInterval = 0
 
     @discardableResult
     public static func initialize(config: WhenKitConfig = WhenKitConfig(), storage: StorageProvider? = nil) -> WhenKit {
@@ -62,6 +63,7 @@ public final class WhenKit {
         self.triggerStore = TriggerStore(storage: self.storage)
         self.cooldownManager = CooldownManager(storage: self.storage)
         self.scoreEngine = ScoreEngine()
+        self.cooldownManager.whenKit = self
 
         triggerStore.incrementSession()
         startAutomaticTracking()
@@ -97,6 +99,19 @@ public final class WhenKit {
         userAttributes[key] = value
     }
 
+    /// Syncs the SDK's internal clock with a trusted server time.
+    /// Call this with a `Date` from your backend's response header or body.
+    /// If not called, the SDK uses the device clock.
+    public func syncTime(_ serverTime: Date) {
+        serverTimeOffset = serverTime.timeIntervalSince1970 - Date().timeIntervalSince1970
+        WhenKitLogger.debug("Time synced (offset: \(String(format: "%.1f", serverTimeOffset))s)")
+    }
+
+    /// Returns the current time adjusted by server offset if available.
+    func now() -> Date {
+        Date(timeIntervalSince1970: Date().timeIntervalSince1970 + serverTimeOffset)
+    }
+
     // MARK: - Rules
 
     /// Adds a rule using the DSL builder.
@@ -130,7 +145,7 @@ public final class WhenKit {
             name: event.rawValue,
             value: value,
             metadata: metadata,
-            timestamp: Date(),
+            timestamp: now(),
             userId: userId,
             platform: "ios",
             appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
@@ -207,7 +222,7 @@ public final class WhenKit {
                 let info = TriggerInfo(
                     ruleName: name,
                     conditionsSnapshot: context.counts,
-                    timestamp: Date(),
+                    timestamp: now(),
                     score: context.score
                 )
                 onRuleTriggered?(name, info)
