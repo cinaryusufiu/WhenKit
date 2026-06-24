@@ -50,7 +50,7 @@ Add to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/cinaryusufiu/WhenKit.git", from: "1.0.0")
+    .package(url: "https://github.com/cinaryusufiu/WhenKit.git", from: "1.0.3")
 ]
 ```
 
@@ -424,7 +424,7 @@ WhenKit.initialize(config: WhenKitConfig(isDebugEnabled: true))
 ```
 
 ```
-[WhenKit][INFO]  WhenKit initialized (v1.0.0)
+[WhenKit][INFO]  WhenKit initialized (v1.0.3)
 [WhenKit][INFO]  First install detected: v2.1.0
 [WhenKit][INFO]  Session #7 started
 [WhenKit][DEBUG] Trigger: purchase_completed, value: 149.9
@@ -513,9 +513,24 @@ Sources/WhenKit/
 - The `onRuleTriggered` callback is invoked on the **same thread** that called `trigger()`.
 - Internal state is protected by locks.
 
+## Server Time Synchronization
+
+By default, WhenKit uses the device clock for timestamps and cooldown calculations. If you need to protect against users manipulating their device time, sync with your server:
+
+```swift
+// In your API response handler, pass the server's Date to WhenKit:
+let serverDate = /* Date from your backend's response header or body */
+WhenKit.shared.syncTime(serverDate)
+```
+
+After calling `syncTime()`, all timestamps and cooldown checks will use the server-adjusted time. If you don't call `syncTime()`, the SDK gracefully falls back to the device clock.
+
+---
+
 ## Storage
 
-- Uses `UserDefaults` by default. You can provide a custom `StorageProvider` for testing or custom persistence.
+- Uses `UserDefaults(suiteName: "com.whenkit.storage")` by default — isolated from your app's standard UserDefaults to prevent key collisions.
+- You can provide a custom `StorageProvider` for testing or custom persistence.
 - All data is stored locally on the device. Nothing is sent anywhere.
 - Event history is automatically pruned at 1000 events to prevent unbounded growth.
 
